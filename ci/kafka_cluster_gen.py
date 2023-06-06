@@ -52,7 +52,7 @@ class KafkaClusterYamlGen(object):
         if self.version >= '3':
             for i, lin in enumerate(yaml_lines):
                 if lin != '\n':
-                    yaml_lines[i] = '  ' + lin
+                    yaml_lines[i] = f'  {lin}'
 
             yaml_lines.insert(0, f'version: \'{self.version}\'\n')
             yaml_lines.insert(0, 'services:\n')
@@ -106,20 +106,15 @@ class KafkaClusterYamlGen(object):
     def _get_zk_servers(self, cur_idx):
         zk_servers = []
         for i in xrange(1, self.num_of_zk + 1):
-            if i != cur_idx:
-                hname = f'{self.zk_prefix}{i}'
-            else:
-                hname = '0.0.0.0'
-
+            hname = f'{self.zk_prefix}{i}' if i != cur_idx else '0.0.0.0'
             zk_server = f'server.{i}={hname}:2888:3888'
             zk_servers.append(zk_server)
         return ','.join(zk_servers)
 
     def _get_zk_connect_setting(self):
-        zk_connect_settings = []
-        for i in xrange(self.num_of_zk):
-            zk_connect_settings.append(
-                f'{self.zk_prefix}{i + 1}:2181')
+        zk_connect_settings = [
+            f'{self.zk_prefix}{i + 1}:2181' for i in xrange(self.num_of_zk)
+        ]
         return ','.join(zk_connect_settings)
 
 
@@ -138,38 +133,27 @@ def gen_services(num, prefix, image, ports, envs,
         # exposed ports
         if exposed_ports:
             service.append('  expose:')
-            for port in exposed_ports:
-                service.append(f'    - "{port}"')
-
+            service.extend(f'    - "{port}"' for port in exposed_ports)
         # ports
         if ports:
             service.append('  ports:')
-            for port in ports:
-                service.append(f'    - "{port}"')
-
+            service.extend(f'    - "{port}"' for port in ports)
         # depends
         if depends:
             service.append('  depends_on:')
-            for dep in depends:
-                service.append(f'    - {dep}')
-
+            service.extend(f'    - {dep}' for dep in depends)
         # volumes
         if volumes:
             service.append('  volumes:')
-            for vol in volumes:
-                service.append(f'    - {vol}')
-
+            service.extend(f'    - {vol}' for vol in volumes)
         # envs
         if envs:
             service.append('  environment:')
-            for env in envs:
-                service.append(f'    - {env}')
-
+            service.extend(f'    - {env}' for env in envs)
         if callback is not None:
             callback(service, i)
 
-        service.append('  restart: always')
-        service.append('\n')
+        service.extend(('  restart: always', '\n'))
         services.extend(service)
     return services
 

@@ -40,10 +40,7 @@ def check_events_from_splunk(index="circleci_events",
     '''
     send a search request to splunk and return the events from the result
     '''
-    #logger.info("search query = " + str(query))
-    events = _collect_events(query, start_time, end_time, url, user, password)
-
-    return events
+    return _collect_events(query, start_time, end_time, url, user, password)
 
 def check_metrics_from_splunk(index="circleci_metrics",
                              start_time="-1h@h",
@@ -56,9 +53,9 @@ def check_metrics_from_splunk(index="circleci_metrics",
     send a search api request to splunk to check for values associated with a given metric and dimension
     '''
     logger.debug("Calling _collect_metrics ")
-    events = _collect_metrics(start_time, end_time, url, user, password, index, metric_name)
-
-    return events
+    return _collect_metrics(
+        start_time, end_time, url, user, password, index, metric_name
+    )
 
 
 def create_index_in_splunk(index="",
@@ -155,9 +152,7 @@ def _collect_events(query, start_time, end_time, url="", user="", password=""):
 
     json_res = create_job.json()
     job_id = json_res['sid']
-    events = _wait_for_job_and__get_events(job_id, url, user, password)
-
-    return events
+    return _wait_for_job_and__get_events(job_id, url, user, password)
 
 def _collect_metrics(start_time, end_time, url="", user="", password="", index="", metric_name=""):
     '''
@@ -168,7 +163,7 @@ def _collect_metrics(start_time, end_time, url="", user="", password="", index="
     @param: end_time (search end time)
     returns events
     '''
-    api_url = url + '/services/catalog/metricstore/dimensions/host/values?filter=index%3d' + index + '&metric_name=' + metric_name + '&earliest=' + start_time + '&latest=' + end_time + '&output_mode=json'
+    api_url = f'{url}/services/catalog/metricstore/dimensions/host/values?filter=index%3d{index}&metric_name={metric_name}&earliest={start_time}&latest={end_time}&output_mode=json'
 
     logger.debug('requesting: %s', api_url)
 
@@ -182,10 +177,7 @@ def _collect_metrics(start_time, end_time, url="", user="", password="", index="
 
     json_res = create_job.json()
 
-    events = json_res['entry']
-    #logger.info('events: %s', events)
-
-    return events
+    return json_res['entry']
 
 
 def _wait_for_job_and__get_events(job_id, url="", user="", password=""):

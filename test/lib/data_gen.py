@@ -43,10 +43,9 @@ def generate_connector_content(input_disc=None):
         }
 
     if input_disc:
-        default_disc.update(input_disc)
+        default_disc |= input_disc
     data = generate_content(default_disc)
-    json_data = json.loads(data, strict=False)
-    return json_data
+    return json.loads(data, strict=False)
 
 
 def generate_content(input_dict):
@@ -56,5 +55,4 @@ def generate_content(input_dict):
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
                              trim_blocks=True)
     config_template = env.get_template('connector.template')
-    export = config_template.render(input_dict)
-    return export
+    return config_template.render(input_dict)

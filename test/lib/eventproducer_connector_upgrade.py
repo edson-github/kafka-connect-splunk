@@ -34,11 +34,11 @@ def check_events_from_topic(target):
         output2 = subprocess.getoutput("echo $(/usr/local/kafka/bin/kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list 'localhost:9092' --topic kafka_connect_upgrade --time -2 | grep -e ':[[:digit:]]*:' | awk -F  ':' '{sum += $3} END {print sum}')")
         time.sleep(5)
         if (int(output1)-int(output2))==target:
-            logger.info("Events in the topic :" + str(int(output1)-int(output2)))
+            logger.info(f"Events in the topic :{str(int(output1) - int(output2))}")
             break
         elif (int(output1)-int(output2))>2000:
-            logger.info("Events in the topic :" + str(int(output1)-int(output2)))
-    logger.info("Events in the topic :" + str(int(output1)-int(output2)))
+            logger.info(f"Events in the topic :{str(int(output1) - int(output2))}")
+    logger.info(f"Events in the topic :{str(int(output1) - int(output2))}")
 
 def generate_kafka_events(num):
     # Generate message data

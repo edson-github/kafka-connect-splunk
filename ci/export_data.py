@@ -124,9 +124,7 @@ class ExportData(object):
 
         json_res = create_job.json()
         job_id = json_res['sid']
-        events = self._wait_for_job_and__get_events(job_id)
-
-        return events
+        return self._wait_for_job_and__get_events(job_id)
 
     def _wait_for_job_and__get_events(self, job_id):
         '''
@@ -172,9 +170,7 @@ class ExportData(object):
         self._check_request_status(event_job)
 
         event_job_json = event_job.json()
-        events = event_job_json['results']
-
-        return events
+        return event_job_json['results']
 
     def _transform_results_to_hec_events(self, events):
         '''
@@ -185,8 +181,7 @@ class ExportData(object):
         '''
         hec_events = []
         for event in events:
-            temp = {}
-            temp['event'] = event['_raw']
+            temp = {'event': event['_raw']}
             parsed_t = time_parser.parse(event['_time'])
             temp['time'] = parsed_t.strftime('%s')
             temp['host'] = event['host']
@@ -286,11 +281,7 @@ class ExportData(object):
                 time.sleep(last_end_time + time_window - now)
             next_end_time = last_end_time + time_window
         else:
-            if last_end_time + time_window < end_time:
-                next_end_time = last_end_time + time_window
-            else:
-                next_end_time = end_time
-
+            next_end_time = min(last_end_time + time_window, end_time)
         return last_end_time, next_end_time
 
     def export(self, query, start_time, end_time, time_window):
