@@ -43,8 +43,8 @@ class KafkaDataGenYamlGen(object):
             f'MESSAGE_COUNT={self.total_messages}',
             f'EPS={self.eps}',
             f'MESSAGE_SIZE={self.message_size}',
-            f'JVM_MAX_HEAP=2G',
-            f'JVM_MIN_HEAP=512M',
+            'JVM_MAX_HEAP=2G',
+            'JVM_MIN_HEAP=512M',
             f'KAFKA_DATA_GEN_SIZE={data_gen_size}',
         ]
         depends = gen_depends_from(self.bootstrap_servers)

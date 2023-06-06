@@ -36,10 +36,10 @@ def create_kafka_connector(setup, params, success=True):
         logger.info(response.content)
         return response.status_code == 201
 
-    status = get_kafka_connector_status(setup, params, action='Create', state='RUNNING')
-
-    if status:
-        logger.debug("Created connector successfully - " + json.dumps(params))
+    if status := get_kafka_connector_status(
+        setup, params, action='Create', state='RUNNING'
+    ):
+        logger.debug(f"Created connector successfully - {json.dumps(params)}")
         return True
     else:
         return False
@@ -56,10 +56,10 @@ def update_kafka_connector(setup, params, success=True):
     if not success:
         return response.status_code == 200
 
-    status = get_kafka_connector_status(setup, params, action='Update', state='RUNNING')
-
-    if status:
-        logger.info("Updated connector successfully - " + json.dumps(params))
+    if status := get_kafka_connector_status(
+        setup, params, action='Update', state='RUNNING'
+    ):
+        logger.info(f"Updated connector successfully - {json.dumps(params)}")
         return True
     else:
         return False
@@ -74,7 +74,7 @@ def delete_kafka_connector(setup, connector):
     response = requests.delete(url=setup["kafka_connect_url"] + "/connectors/" + connector,
                                headers={'Accept': 'application/json', 'Content-Type': 'application/json'})
     if response.status_code == 204:
-        logger.debug("Deleted connector successfully - " + connector)
+        logger.debug(f"Deleted connector successfully - {connector}")
         return True
 
     logger.error(f"Failed to delete connector: {connector}, response code - {response.status_code}")
@@ -127,8 +127,7 @@ def get_running_kafka_connector_task_status(setup, params):
                 time.sleep(2)
                 content = requests.get(url=url, headers=header).json()
                 logger.info(content)
-                task_status = jsonpath.jsonpath(content, '$.tasks.*.state')
-                return task_status
+                return jsonpath.jsonpath(content, '$.tasks.*.state')
 
 
 
@@ -141,10 +140,10 @@ def pause_kafka_connector(setup, params, success=True):
     if not success:
         return response.status_code != 202
 
-    status = get_kafka_connector_status(setup, params, action='Pause', state='PAUSED')
-
-    if status:
-        logger.info("Paused connector successfully - " + json.dumps(params))
+    if status := get_kafka_connector_status(
+        setup, params, action='Pause', state='PAUSED'
+    ):
+        logger.info(f"Paused connector successfully - {json.dumps(params)}")
         return True
     else:
         return False
@@ -159,10 +158,10 @@ def resume_kafka_connector(setup, params, success=True):
     if not success:
         return response.status_code == 202
 
-    status = get_kafka_connector_status(setup, params, action='Resume', state='RUNNING')
-
-    if status:
-        logger.info("Resumed connector successfully - " + json.dumps(params))
+    if status := get_kafka_connector_status(
+        setup, params, action='Resume', state='RUNNING'
+    ):
+        logger.info(f"Resumed connector successfully - {json.dumps(params)}")
         return True
     else:
         return False
@@ -176,12 +175,12 @@ def restart_kafka_connector(setup, params, success=True):
                              headers={'Accept': 'application/json', 'Content-Type': 'application/json'})
 
     if not success:
-        return response.status_code == 202 or response.status_code == 204
+        return response.status_code in {202, 204}
 
-    status = get_kafka_connector_status(setup, params, action='Restart', state='RUNNING')
-
-    if status:
-        logger.info("Restarted connector successfully - " + json.dumps(params))
+    if status := get_kafka_connector_status(
+        setup, params, action='Restart', state='RUNNING'
+    ):
+        logger.info(f"Restarted connector successfully - {json.dumps(params)}")
         return True
     else:
         return False
@@ -192,18 +191,15 @@ def get_running_connector_list(setup):
     content = requests.get(url=setup["kafka_connect_url"] + "/connectors",
                            headers={'Accept': 'application/json', 'Content-Type': 'application/json'})
     content_text = content.text[1:-1].replace('\"', '')
-    if not content_text:
-        return []
-
-    connectors = content_text.split(',')
-    return connectors
+    return [] if not content_text else content_text.split(',')
 
 
 def create_kafka_topics(config, topics):
     client = KafkaAdminClient(bootstrap_servers=config["kafka_broker_url"], client_id='test')
     broker_topics = client.list_topics()
-    topic_list = []
-    for topic in topics:
-        if topic not in broker_topics:
-            topic_list.append(NewTopic(name=topic, num_partitions=1, replication_factor=1))
+    topic_list = [
+        NewTopic(name=topic, num_partitions=1, replication_factor=1)
+        for topic in topics
+        if topic not in broker_topics
+    ]
     client.create_topics(new_topics=topic_list, validate_only=False)

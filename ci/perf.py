@@ -121,10 +121,10 @@ PERF_CASES = [
 def get_hec_uris():
     # calculate HEC URIs
     indxer_cluster_size = int(os.environ['INDEX_CLUSTER_SIZE'])
-    endpoints = []
-    for i in xrange(1, indxer_cluster_size + 1):
-        endpoints.append(f'https://{IDX_HOSTNAME_PREFIX}{i}:8088')
-
+    endpoints = [
+        f'https://{IDX_HOSTNAME_PREFIX}{i}:8088'
+        for i in xrange(1, indxer_cluster_size + 1)
+    ]
     return ','.join(endpoints)
 
 
@@ -139,7 +139,7 @@ def _get_connector_config(hec_uris, hec_raw, hec_ack, test_case):
     sourcetype = f'connector-perf:{hec_settings}:{params}:jvm_heap={JVM_HEAP_SIZE}'
     connector_name = f'splunk-sink-{int(time.time() * 1000)}'
 
-    connector_config = {
+    return {
         'name': connector_name,
         'config': {
             'connector.class': 'com.splunk.kafka.connect.SplunkSinkConnector',
@@ -152,15 +152,16 @@ def _get_connector_config(hec_uris, hec_raw, hec_ack, test_case):
             'splunk.hec.token': token,
             'splunk.hec.ack.enabled': hec_ack,
             'splunk.hec.raw': hec_raw,
-            'splunk.hec.max.batch.size': test_case['splunk.hec.max.batch.size'],
+            'splunk.hec.max.batch.size': test_case[
+                'splunk.hec.max.batch.size'
+            ],
             'splunk.hec.threads': test_case['splunk.hec.threads'],
             'splunk.hec.track.data': 'true',
             'splunk.hec.ssl.validate.certs': 'false',
             'splunk.hec.raw.line.breaker': LINE_BREAKER,
             'name': connector_name,
-        }
+        },
     }
-    return connector_config
 
 
 def create_connector(connector_uri, connector_config):
@@ -175,9 +176,8 @@ def create_connector(connector_uri, connector_config):
         else:
             if resp.ok:
                 return
-            else:
-                logging.error('failed to create connector %s', resp.json)
-                time.sleep(2)
+            logging.error('failed to create connector %s', resp.json)
+            time.sleep(2)
 
 
 def delete_connector(connector_uri, connector_config):
@@ -192,12 +192,11 @@ def delete_connector(connector_uri, connector_config):
         else:
             if resp.ok:
                 return
-            else:
-                logging.error('failed to delete connector %s', resp.text)
-                if resp.status_code == 404:
-                    return
+            logging.error('failed to delete connector %s', resp.text)
+            if resp.status_code == 404:
+                return
 
-                time.sleep(2)
+            time.sleep(2)
 
 
 def wait_for_connector_do_data_collection_injection():
@@ -223,30 +222,28 @@ def _do_perf(hec_uris, hec_raw, hec_ack):
 
 def _get_hec_configs():
     mode = os.environ.get('KAFKA_CONNECT_ACK_MODE')
-    if mode == 'no_ack':
-        ack_modes = ['false']
-    elif mode == 'ack':
+    if mode == 'ack':
         ack_modes = ['true']
+    elif mode == 'no_ack':
+        ack_modes = ['false']
     else:
         ack_modes = ['true', 'false']
 
     # raw=true/false, ack=true/false
     hec_mode = os.environ.get('KAFKA_CONNECT_HEC_MODE')
     if hec_mode == 'event':
-        hec_configs = {
+        return {
             'false': ack_modes,
         }
     elif hec_mode == 'raw':
-        hec_configs = {
+        return {
             'true': ack_modes,
         }
     else:
-        hec_configs = {
+        return {
             'false': ack_modes,
             'true': ack_modes,
         }
-
-    return hec_configs
 
 
 def _new_data_exporter():

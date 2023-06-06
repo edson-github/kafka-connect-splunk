@@ -100,7 +100,6 @@ def pytest_sessionfinish(session, exitstatus):
                                             user=config["splunk_user"],
                                             query=[f"search {search_query}"],
                                             password=config["splunk_password"])
-        myfile = open('events.txt', 'w+')
-        for i in events:
-            myfile.write("%s\n" % i)
-        myfile.close()
+        with open('events.txt', 'w+') as myfile:
+            for i in events:
+                myfile.write("%s\n" % i)
